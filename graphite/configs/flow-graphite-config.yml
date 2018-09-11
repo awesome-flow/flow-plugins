@@ -1,0 +1,34 @@
+system:
+  maxprocs: 4
+
+components:
+  udp_rcv:
+    module: receiver.udp
+    params:
+      bind_addr: :3101
+  graphite_msg_parser:
+    plugin: graphite
+    constructor: NewMsgParser
+  replicator:
+    module: link.replicator
+    params:
+      replicas: 1
+      hash_key: metric-name
+  stdout:
+    module: sink.dumper
+    params:
+      out: STDOUT
+  # tcp_sink:
+  #   module: sink.tcp
+  #   params:
+  #     bind_addr: :7222
+
+pipeline:
+  udp_rcv:
+    connect: graphite_msg_parser
+  graphite_msg_parser:
+    connect: replicator
+  replicator:
+    links:
+      - stdout
+    
