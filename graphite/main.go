@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 
-	log "github.com/sirupsen/logrus"
 	core "github.com/whiteboxio/flow/pkg/core"
 )
 
@@ -20,7 +19,7 @@ func (mp *MsgParser) Recv(msg *core.Message) error {
 	if ix := bytes.IndexByte(msg.Payload, ' '); ix != -1 {
 		metricName := msg.Payload[:ix]
 		msg.SetMeta("metric-name", metricName)
-		log.Infof("Sending metric with name: [%s]", metricName)
+		//log.Infof("Sending metric with name: [%s]", metricName)
 		return mp.Send(msg)
 	}
 	return msg.AckInvalid()
