@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-func TestConfigReader_ReadFile(t *testing.T) {
+func TestConfigReader_FromFile(t *testing.T) {
 
 	configData := []byte(`
-cluster test-cluster
+cluster 'test-cluster'
 	jump_fnv1a_ch replication 1
 		flow_eventlog_tcp_7220:7220=000
 		flow_eventlog_tcp_7221:7221=001
@@ -35,7 +35,7 @@ match .*
 		t.Fatalf("Failed to write the data to tmp file: %s", err)
 	}
 
-	cfg, err := ReadFile(tmpFile.Name())
+	cfg, err := FromFile(tmpFile.Name())
 	if err != nil {
 		t.Fatalf("Failed to read the config: %s", err)
 	}

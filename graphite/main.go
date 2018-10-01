@@ -16,6 +16,7 @@ func NewMsgParser(name string, params core.Params) (core.Link, error) {
 }
 
 func (mp *MsgParser) Recv(msg *core.Message) error {
+	//fmt.Printf("Graphite plugin received a new message: {%s}\n", msg.Payload)
 	if ix := bytes.IndexByte(msg.Payload, ' '); ix != -1 {
 		metricName := msg.Payload[:ix]
 		msg.SetMeta("metric-name", metricName)
