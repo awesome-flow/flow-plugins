@@ -35,18 +35,16 @@ type GraphiteConfigServer struct {
 }
 
 type GraphiteConfig struct {
-	aggregators []GraphiteConfigAggregator
-	clusters    []GraphiteConfigCluster
-	routes      []GraphiteConfigRoute
-	servers     []GraphiteConfigServer
+	aggregators []*GraphiteConfigAggregator
+	clusters    map[string]*GraphiteConfigCluster
+	routes      []*GraphiteConfigRoute
 }
 
 func New() *GraphiteConfig {
 	return &GraphiteConfig{
-		aggregators: make([]GraphiteConfigAggregator, 0),
-		clusters:    make([]GraphiteConfigCluster, 0),
-		routes:      make([]GraphiteConfigRoute, 0),
-		servers:     make([]GraphiteConfigServer, 0),
+		aggregators: make([]*GraphiteConfigAggregator, 0),
+		clusters:    make(map[string]*GraphiteConfigCluster),
+		routes:      make([]*GraphiteConfigRoute, 0),
 	}
 }
 
@@ -68,7 +66,7 @@ func FromFile(path string) (*GraphiteConfig, error) {
 			continue
 		}
 		if match, _ := regexp.MatchString("^cluster", line); match {
-			cluster := GraphiteConfigCluster{
+			cluster := &GraphiteConfigCluster{
 				name: strings.Trim(line[7:], " '\""),
 			}
 			replRegex, err := regexp.Compile("([\\w\\d_]+)\\s+replication\\s+(\\d+)")
@@ -127,10 +125,10 @@ func FromFile(path string) (*GraphiteConfig, error) {
 					sort.Slice(cluster.servers, func(i, j int) bool {
 						return cluster.servers[i].index < cluster.servers[j].index
 					})
-					cfg.clusters = append(cfg.clusters, cluster)
 					break Cluster
 				}
 			}
+			cfg.clusters[cluster.name] = cluster
 		} else if match, _ := regexp.MatchString("^match", line); match {
 			matchRule := strings.TrimSpace(line[5:])
 			fmt.Printf("Route definition started: %q\n", matchRule)
@@ -138,7 +136,7 @@ func FromFile(path string) (*GraphiteConfig, error) {
 			if err != nil {
 				return nil, err
 			}
-			configRoute := GraphiteConfigRoute{
+			configRoute := &GraphiteConfigRoute{
 				pattern: matchRegex,
 			}
 			shouldBreak := false
