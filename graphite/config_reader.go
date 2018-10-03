@@ -35,16 +35,16 @@ type GraphiteConfigServer struct {
 }
 
 type GraphiteConfig struct {
-	aggregators []*GraphiteConfigAggregator
-	clusters    map[string]*GraphiteConfigCluster
-	routes      []*GraphiteConfigRoute
+	//aggregators []*GraphiteConfigAggregator
+	clusters map[string]*GraphiteConfigCluster
+	routes   []*GraphiteConfigRoute
 }
 
 func New() *GraphiteConfig {
 	return &GraphiteConfig{
-		aggregators: make([]*GraphiteConfigAggregator, 0),
-		clusters:    make(map[string]*GraphiteConfigCluster),
-		routes:      make([]*GraphiteConfigRoute, 0),
+		//aggregators: make([]*GraphiteConfigAggregator, 0),
+		clusters: make(map[string]*GraphiteConfigCluster),
+		routes:   make([]*GraphiteConfigRoute, 0),
 	}
 }
 
