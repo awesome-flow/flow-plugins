@@ -2,28 +2,107 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 
-	core "github.com/whiteboxio/flow/pkg/core"
+	"github.com/whiteboxio/flow/pkg/core"
+	replicator "github.com/whiteboxio/flow/pkg/link/replicator"
+	tcp_sink "github.com/whiteboxio/flow/pkg/sink/tcp"
 )
 
-type MsgParser struct {
-	Name string
+type GraphiteLink struct {
+	name     string
+	config   *GraphiteConfig
+	clusters map[string]core.Link
 	*core.Connector
 }
 
-func NewMsgParser(name string, params core.Params) (core.Link, error) {
-	return &MsgParser{name, core.NewConnector()}, nil
+func New(name string, params core.Params) (core.Link, error) {
+	link, err := bootstrap(name, params)
+	return link, err
 }
 
-func (mp *MsgParser) Recv(msg *core.Message) error {
-	//fmt.Printf("Graphite plugin received a new message: {%s}\n", msg.Payload)
+func (gl *GraphiteLink) Recv(msg *core.Message) error {
+	var metricName string
 	if ix := bytes.IndexByte(msg.Payload, ' '); ix != -1 {
-		metricName := msg.Payload[:ix]
-		msg.SetMeta("metric-name", metricName)
-		//log.Infof("Sending metric with name: [%s]", metricName)
-		return mp.Send(msg)
+		msg.SetMeta("metric-name", msg.Payload[:ix])
+		metricName = string(msg.Payload[:ix])
+	} else {
+		return msg.AckUnroutable()
 	}
-	return msg.AckInvalid()
+Routes:
+	for _, route := range gl.config.routes {
+		if route.pattern.MatchString(metricName) {
+		Dst:
+			for _, dst := range route.destinations {
+				endpoint, ok := gl.clusters[dst]
+				if !ok {
+					continue Dst
+				}
+				//TODO: Collect msg submit statuses and return the composite status
+				msgCp := core.CpMessage(msg)
+				go endpoint.Recv(msgCp)
+			}
+			if route.stop {
+				break Routes
+			}
+		}
+	}
+
+	return msg.AckDone()
 }
 
-func main() {}
+func bootstrap(name string, params core.Params) (core.Link, error) {
+	configPath, ok := params["config"]
+	if !ok {
+		return nil, fmt.Errorf("Missing graphite config path")
+	}
+	config, err := ConfigFromFile(configPath.(string))
+	if err != nil {
+		return nil, err
+	}
+	clusters := make(map[string]core.Link)
+	for name, cfg := range config.clusters {
+		cluster, err := buildCluster(cfg)
+		if err != nil {
+			return nil, err
+		}
+		clusters[name] = cluster
+	}
+	graphite := &GraphiteLink{
+		name,
+		config,
+		clusters,
+		core.NewConnector(),
+	}
+
+	return graphite, nil
+}
+
+func buildCluster(config *GraphiteConfigCluster) (core.Link, error) {
+	repl, err := replicator.New(config.name, core.Params{
+		"hash_key":  "metric-name",
+		"hash_algo": config.ctype,
+		"replicas":  config.replfactor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	endpoints := make([]core.Link, len(config.servers))
+	for ix, serverCfg := range config.servers {
+		endpoint, err := tcp_sink.New(
+			fmt.Sprintf("graphite_endpoint_%s_%d", serverCfg.host, serverCfg.port),
+			core.Params{
+				"bind_addr": fmt.Sprintf("%s:%d", serverCfg.host, serverCfg.port),
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		endpoints[ix] = endpoint
+	}
+	if err := repl.LinkTo(endpoints); err != nil {
+		return nil, err
+	}
+
+	return repl, nil
+}

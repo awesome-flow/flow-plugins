@@ -40,17 +40,16 @@ type GraphiteConfig struct {
 	routes   []*GraphiteConfigRoute
 }
 
-func New() *GraphiteConfig {
+func NewConfig() *GraphiteConfig {
 	return &GraphiteConfig{
-		//aggregators: make([]*GraphiteConfigAggregator, 0),
 		clusters: make(map[string]*GraphiteConfigCluster),
 		routes:   make([]*GraphiteConfigRoute, 0),
 	}
 }
 
-func FromFile(path string) (*GraphiteConfig, error) {
+func ConfigFromFile(path string) (*GraphiteConfig, error) {
 	var err error
-	cfg := New()
+	cfg := NewConfig()
 
 	file, err := os.Open(path)
 	if err != nil {
