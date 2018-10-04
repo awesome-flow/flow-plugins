@@ -3,11 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/whiteboxio/flow/pkg/core"
+	mpx "github.com/whiteboxio/flow/pkg/link/mpx"
 	replicator "github.com/whiteboxio/flow/pkg/link/replicator"
 	tcp_sink "github.com/whiteboxio/flow/pkg/sink/tcp"
 )
@@ -36,54 +35,26 @@ func (gl *GraphiteLink) Recv(msg *core.Message) error {
 	} else {
 		return msg.AckUnroutable()
 	}
-	var succCnt, totalCnt, failCnt int32 = 0, 0, 0
-	wg := &sync.WaitGroup{}
+	dests := make(map[string]bool)
 Routes:
 	for _, route := range gl.config.routes {
 		if route.pattern.MatchString(metricName) {
-		Dst:
-			for _, dst := range route.destinations {
-				endpoint, ok := gl.clusters[dst]
-				if !ok {
-					continue Dst
-				}
-				msgCp := core.CpMessage(msg)
-				wg.Add(1)
-				totalCnt++
-				go func() {
-					if err := endpoint.Recv(msgCp); err != nil {
-						atomic.AddInt32(&failCnt, 1)
-					} else {
-						atomic.AddInt32(&succCnt, 1)
-					}
-					wg.Done()
-				}()
+			for _, dest := range route.destinations {
+				dests[dest] = true
 			}
 			if route.stop {
 				break Routes
 			}
 		}
 	}
-	done := make(chan bool)
-	go func() {
-		wg.Wait()
-		done <- true
-		close(done)
-	}()
-	select {
-	case <-done:
-		if failCnt != 0 {
-			if failCnt == totalCnt {
-				return msg.AckFailed()
-			} else {
-				return msg.AckPartialSend()
-			}
-		} else {
-			return msg.AckDone()
-		}
-	case <-time.After(MsgSendTimeout):
-		return msg.AckTimedOut()
+	links := make([]core.Link, len(dests))
+	ix := 0
+	for dest := range dests {
+		links[ix] = gl.clusters[dest]
+		ix++
 	}
+
+	return mpx.Multiplex(msg, links, MsgSendTimeout)
 }
 
 func bootstrap(name string, params core.Params) (core.Link, error) {
@@ -135,6 +106,7 @@ func buildCluster(config *GraphiteConfigCluster) (core.Link, error) {
 		}
 		endpoints[ix] = endpoint
 	}
+
 	if err := repl.LinkTo(endpoints); err != nil {
 		return nil, err
 	}
