@@ -3,10 +3,17 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/whiteboxio/flow/pkg/core"
 	replicator "github.com/whiteboxio/flow/pkg/link/replicator"
 	tcp_sink "github.com/whiteboxio/flow/pkg/sink/tcp"
+)
+
+const (
+	MsgSendTimeout = 100 * time.Millisecond
 )
 
 type GraphiteLink struct {
@@ -29,6 +36,8 @@ func (gl *GraphiteLink) Recv(msg *core.Message) error {
 	} else {
 		return msg.AckUnroutable()
 	}
+	var succCnt, totalCnt, failCnt int32 = 0, 0, 0
+	wg := &sync.WaitGroup{}
 Routes:
 	for _, route := range gl.config.routes {
 		if route.pattern.MatchString(metricName) {
@@ -38,17 +47,43 @@ Routes:
 				if !ok {
 					continue Dst
 				}
-				//TODO: Collect msg submit statuses and return the composite status
 				msgCp := core.CpMessage(msg)
-				go endpoint.Recv(msgCp)
+				wg.Add(1)
+				totalCnt++
+				go func() {
+					if err := endpoint.Recv(msgCp); err != nil {
+						atomic.AddInt32(&failCnt, 1)
+					} else {
+						atomic.AddInt32(&succCnt, 1)
+					}
+					wg.Done()
+				}()
 			}
 			if route.stop {
 				break Routes
 			}
 		}
 	}
-
-	return msg.AckDone()
+	done := make(chan bool)
+	go func() {
+		wg.Wait()
+		done <- true
+		close(done)
+	}()
+	select {
+	case <-done:
+		if failCnt != 0 {
+			if failCnt == totalCnt {
+				return msg.AckFailed()
+			} else {
+				return msg.AckPartialSend()
+			}
+		} else {
+			return msg.AckDone()
+		}
+	case <-time.After(MsgSendTimeout):
+		return msg.AckTimedOut()
+	}
 }
 
 func bootstrap(name string, params core.Params) (core.Link, error) {
@@ -106,3 +141,5 @@ func buildCluster(config *GraphiteConfigCluster) (core.Link, error) {
 
 	return repl, nil
 }
+
+func main() {}
