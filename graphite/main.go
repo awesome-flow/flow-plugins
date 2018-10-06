@@ -42,6 +42,9 @@ Routes:
 			for _, dest := range route.destinations {
 				dests[dest] = true
 			}
+			if route.drop {
+				continue Routes
+			}
 			if route.stop {
 				break Routes
 			}

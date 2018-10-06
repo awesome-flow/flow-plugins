@@ -1,0 +1,26 @@
+system:
+    maxprocs: 4
+    metrics:
+        enabled: true
+        interval: 1
+        receiver:
+            type: graphite
+            params:
+                namespace: metrics.flowd
+                host: localhost
+                port: 2003
+
+components:
+    udp_rcv:
+        module: receiver.udp
+        params:
+            bind_addr: :3101
+    graphite:
+        plugin: graphite
+        constructor: New
+        params:
+            config: /home/olegs/workspace/golang/src/github.com/whiteboxio/flow-plugins/graphite/configs/graphite-relay.conf
+
+pipeline:
+    udp_rcv:
+        connect: graphite

@@ -17,7 +17,7 @@ type GraphiteConfigAggregator struct {
 type GraphiteConfigCluster struct {
 	name       string
 	ctype      string
-	replfactor uint
+	replfactor int
 	servers    []*GraphiteConfigServer
 }
 
@@ -83,12 +83,12 @@ func ConfigFromFile(path string) (*GraphiteConfig, error) {
 					"%q, can not parse it", replLine)
 			}
 			hashAlg, replFactorStr := replMatch[1], replMatch[2]
-			replFactor, err := strconv.ParseUint(replFactorStr, 10, 32)
+			replFactor, err := strconv.ParseInt(replFactorStr, 10, 32)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to parse replication factor: %q",
 					replFactorStr)
 			}
-			cluster.replfactor = uint(replFactor)
+			cluster.replfactor = int(replFactor)
 			cluster.ctype = hashAlg
 			clusterServerRegex := regexp.MustCompile("^(\\w+):(\\d+)=(\\d+)$")
 		Cluster:
@@ -105,11 +105,11 @@ func ConfigFromFile(path string) (*GraphiteConfig, error) {
 						return nil, fmt.Errorf("Failed to parse cluster server"+
 							" config: %q", clusterLine)
 					}
-					serverPort, err := strconv.ParseUint(match[2], 10, 16)
+					serverPort, err := strconv.ParseInt(match[2], 10, 16)
 					if err != nil {
 						return nil, err
 					}
-					serverIndex, err := strconv.ParseUint(match[3], 10, 32)
+					serverIndex, err := strconv.ParseInt(match[3], 10, 32)
 					if err != nil {
 						return nil, err
 					}
