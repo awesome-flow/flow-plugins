@@ -20,10 +20,11 @@ type GraphiteLink struct {
 	config   *GraphiteConfig
 	clusters map[string]core.Link
 	*core.Connector
+	context *core.Context
 }
 
-func New(name string, params core.Params) (core.Link, error) {
-	link, err := bootstrap(name, params)
+func New(name string, params core.Params, context *core.Context) (core.Link, error) {
+	link, err := bootstrap(name, params, context)
 	return link, err
 }
 
@@ -57,10 +58,10 @@ Routes:
 		ix++
 	}
 
-	return mpx.Multiplex(msg, links, MsgSendTimeout)
+	return mpx.Multiplex(msg, mpx.MpxMaskAll, links, MsgSendTimeout)
 }
 
-func bootstrap(name string, params core.Params) (core.Link, error) {
+func bootstrap(name string, params core.Params, context *core.Context) (core.Link, error) {
 	configPath, ok := params["config"]
 	if !ok {
 		return nil, fmt.Errorf("Missing graphite config path")
@@ -82,27 +83,35 @@ func bootstrap(name string, params core.Params) (core.Link, error) {
 		config,
 		clusters,
 		core.NewConnector(),
+		context,
 	}
 
 	return graphite, nil
 }
 
 func buildCluster(config *GraphiteConfigCluster) (core.Link, error) {
-	repl, err := replicator.New(config.name, core.Params{
-		"hash_key":  "metric-name",
-		"hash_algo": config.ctype,
-		"replicas":  config.replfactor,
-	})
+	ctx := core.NewContext()
+	repl, err := replicator.New(
+		config.name,
+		core.Params{
+			"hash_key":  "metric-name",
+			"hash_algo": config.ctype,
+			"replicas":  config.replfactor,
+		},
+		ctx,
+	)
 	if err != nil {
 		return nil, err
 	}
 	endpoints := make([]core.Link, len(config.servers))
 	for ix, serverCfg := range config.servers {
+		tcpCtx := core.NewContext()
 		endpoint, err := tcp_sink.New(
 			fmt.Sprintf("graphite_endpoint_%s_%d", serverCfg.host, serverCfg.port),
 			core.Params{
 				"bind_addr": fmt.Sprintf("%s:%d", serverCfg.host, serverCfg.port),
 			},
+			tcpCtx,
 		)
 		if err != nil {
 			return nil, err
