@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/whiteboxio/flow/pkg/core"
-	mpx "github.com/whiteboxio/flow/pkg/link/mpx"
+	demux "github.com/whiteboxio/flow/pkg/link/demux"
 	replicator "github.com/whiteboxio/flow/pkg/link/replicator"
 	tcp_sink "github.com/whiteboxio/flow/pkg/sink/tcp"
 )
@@ -20,7 +20,6 @@ type GraphiteLink struct {
 	config   *GraphiteConfig
 	clusters map[string]core.Link
 	*core.Connector
-	context *core.Context
 }
 
 func New(name string, params core.Params, context *core.Context) (core.Link, error) {
@@ -58,7 +57,7 @@ Routes:
 		ix++
 	}
 
-	return mpx.Multiplex(msg, mpx.MpxMaskAll, links, MsgSendTimeout)
+	return demux.Demultiplex(msg, 1<<uint(ix)-1, links[:ix], MsgSendTimeout)
 }
 
 func bootstrap(name string, params core.Params, context *core.Context) (core.Link, error) {
@@ -82,8 +81,7 @@ func bootstrap(name string, params core.Params, context *core.Context) (core.Lin
 		name,
 		config,
 		clusters,
-		core.NewConnector(),
-		context,
+		core.NewConnectorWithContext(context),
 	}
 
 	return graphite, nil

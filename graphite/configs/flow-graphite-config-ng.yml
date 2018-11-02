@@ -1,5 +1,5 @@
 system:
-    maxprocs: 4
+    maxprocs: 2
     metrics:
         enabled: true
         interval: 1
