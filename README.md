@@ -142,6 +142,7 @@ $GOPATH/src/github.com/whiteboxio/flow: make build
 $GOPATH/src/github.com/whiteboxio/flow: FLOW_PLUGIN_PATH=../flow-plugins/ \
   CONFIG_FILE=../flow-plugins/graphite/configs/flow-graphite-config-ng.yml \
   ./builds/flowd
+```
 
 Now we have a local graphite relay that sends messages over to graphite based
 on a carbon-c-relay configuration.
