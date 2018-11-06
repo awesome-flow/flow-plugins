@@ -130,7 +130,6 @@ func ConfigFromFile(path string) (*GraphiteConfig, error) {
 			cfg.clusters[cluster.name] = cluster
 		} else if match, _ := regexp.MatchString("^match", line); match {
 			matchRule := strings.TrimSpace(line[5:])
-			fmt.Printf("Route definition started: %q\n", matchRule)
 			matchRegex, err := regexp.Compile(matchRule)
 			if err != nil {
 				return nil, err
@@ -148,7 +147,6 @@ func ConfigFromFile(path string) (*GraphiteConfig, error) {
 					line = strings.Trim(line, ";")
 				}
 				if len(line) > 0 {
-					fmt.Printf("Match line: %q\n", line)
 					if line == "stop" {
 						configRoute.stop = true
 					} else if line == "drop" {

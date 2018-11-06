@@ -1,0 +1,42 @@
+system:
+  maxprocs: 8
+  metrics:
+    enabled: true
+    interval: 1
+    receiver:
+      type: graphite
+      params:
+        namespace: metrics.flowd
+        host: localhost
+        port: 2003
+
+components:
+  udp_rcv:
+    module: receiver.udp
+    params:
+      bind_addr: :3101
+      #backend: evio
+      #num_loops: 8
+  graphite_msg_parser:
+    plugin: graphite
+    constructor: NewMsgParser
+    params:
+      format: plain # doesn't really matter but it will in the future
+  replicator:
+    module: link.replicator
+    params:
+      replicas: 1
+      hash_key: metric-name
+  graphite_sink:
+    module: sink.tcp
+    params:
+      bind_addr: :2003
+
+pipeline:
+  udp_rcv:
+    connect: graphite_msg_parser
+  graphite_msg_parser:
+    connect: replicator
+  replicator:
+    links:
+      - graphite_sink
