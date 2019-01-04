@@ -149,6 +149,6 @@ on a carbon-c-relay configuration.
 
 ## Copyright
 
-This software is created by Oleg Sidorov in 2018.
+This software is created by Oleg Sidorov in 2018–2019.
 
 This software is distributed under under MIT license. See LICENSE file for full license text.
