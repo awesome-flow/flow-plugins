@@ -1,8 +1,8 @@
 # [WIP] Flow Plugins
 
-![logo](https://github.com/whiteboxio/flow/blob/master/flow.png)
+![logo](https://github.com/awesome-flow/flow/blob/master/flow.png)
 
-This repository contains plugins for [Flow framework](https://github.com/whiteboxio/flow).
+This repository contains plugins for [Flow framework](https://github.com/awesome-flow/flow).
 
 ## Flow Plugin Infrastructure
 
@@ -64,7 +64,7 @@ Below there is an example of a plugin
 package main
 
 import (
-	flow "github.com/whitebox/flow/pkg/core"
+	flow "github.com/awesome-flow/flow/pkg/core"
 	"bufio"
 	"fmt"
 	"os"
@@ -108,14 +108,14 @@ plugin is going to be built using the flow library and we'd better make sure we
 get all the recent best :-)
 
 Generally speaking, flow-plugins location doesn't really matter, mine resides
-in: `$GOPATH/src/github.com/whiteboxio/flow-plugins`, and flow itself is in
-`$GOPATH/src/github.com/whiteboxio/flow`.
+in: `$GOPATH/src/github.com/awesome-flow/flow-plugins`, and flow itself is in
+`$GOPATH/src/github.com/awesome-flow/flow`.
 
 I will use graphite plugin as an example. Building a plugin is as easy as:
 
 ```
-$GOPATH/src/github.com/whiteboxio/flow-plugins: cd graphite
-$GOPATH/src/github.com/whiteboxio/flow-plugins/graphite: go build -buildmode plugin
+$GOPATH/src/github.com/awesome-flow/flow-plugins: cd graphite
+$GOPATH/src/github.com/awesome-flow/flow-plugins/graphite: go build -buildmode plugin
 ```
 
 The latter will generate a .so library file, in my example it's graphite.so.
@@ -137,9 +137,9 @@ to go.
 
 Flow to be started like:
 ```
-$GOPATH/src/github.com/whiteboxio/flow-plugins: cd ../flow
-$GOPATH/src/github.com/whiteboxio/flow: make build
-$GOPATH/src/github.com/whiteboxio/flow: FLOW_PLUGIN_PATH=../flow-plugins/ \
+$GOPATH/src/github.com/awesome-flow/flow-plugins: cd ../flow
+$GOPATH/src/github.com/awesome-flow/flow: make build
+$GOPATH/src/github.com/awesome-flow/flow: FLOW_PLUGIN_PATH=../flow-plugins/ \
   CONFIG_FILE=../flow-plugins/graphite/configs/flow-graphite-config-ng.yml \
   ./builds/flowd
 ```

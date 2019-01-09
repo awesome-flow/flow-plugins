@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/whiteboxio/flow/pkg/core"
-	demux "github.com/whiteboxio/flow/pkg/link/demux"
-	replicator "github.com/whiteboxio/flow/pkg/link/replicator"
-	tcp_sink "github.com/whiteboxio/flow/pkg/sink/tcp"
+	"github.com/awesome-flow/flow/pkg/core"
+	demux "github.com/awesome-flow/flow/pkg/link/demux"
+	replicator "github.com/awesome-flow/flow/pkg/link/replicator"
+	tcp_sink "github.com/awesome-flow/flow/pkg/sink/tcp"
 )
 
 const (
