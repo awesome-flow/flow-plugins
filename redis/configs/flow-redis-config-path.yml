@@ -1,0 +1,29 @@
+system:
+    maxprocs: 2
+    metrics:
+        enabled: true
+        interval: 1
+        receiver:
+            type: graphite
+            params:
+                namespace: metrics.flowd
+                host: localhost
+                port: 2003
+    admin:
+        enabled: true
+        bind_addr: :4101
+
+components:
+    udp_rcv:
+        module: receiver.udp
+        params:
+            bind_addr: :3101
+    redis:
+        plugin: redis
+        constructor: New
+        params:
+            config: /Users/ruppala/go/src/github.com/awesome-flow/flow-plugins/redis/configs/redis-server.conf
+
+pipeline:
+    udp_rcv:
+        connect: redis
