@@ -22,7 +22,7 @@ components:
         plugin: graphite
         constructor: New
         params:
-            config: /home/olegs/workspace/golang/src/github.com/whiteboxio/flow-plugins/graphite/configs/graphite-relay.conf
+            config: /home/olegs/workspace/golang/src/github.com/awesome-flow/flow-plugins/graphite/configs/graphite-relay.conf
 
 pipeline:
     udp_rcv:

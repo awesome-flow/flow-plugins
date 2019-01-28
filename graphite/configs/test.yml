@@ -1,0 +1,28 @@
+system:
+    maxprocs: 4
+    admin:
+        enabled: true
+        bind_addr: :4101
+    metrics:
+        enabled: true
+        interval: 1
+        receiver:
+            type: graphite
+            params:
+                namespace: metrics.flowd
+                host: localhost
+                port: 2003
+
+components:
+    tcp_rcv:
+        module: "receiver.tcp"
+        params:
+            bind_addr: :3101
+            mode: silent
+            #backend: evio
+    devnull:
+        module: "sink.null"
+
+pipeline:
+    tcp_rcv:
+        connect: devnull

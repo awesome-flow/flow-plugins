@@ -29,9 +29,10 @@ func New(name string, params core.Params, context *core.Context) (core.Link, err
 
 func (gl *GraphiteLink) Recv(msg *core.Message) error {
 	var metricName string
-	if ix := bytes.IndexByte(msg.Payload, ' '); ix != -1 {
-		msg.SetMeta("metric-name", msg.Payload[:ix])
-		metricName = string(msg.Payload[:ix])
+	payload := msg.Payload()
+	if ix := bytes.IndexByte(payload, ' '); ix != -1 {
+		msg.SetMeta("metric-name", payload[:ix])
+		metricName = string(payload[:ix])
 	} else {
 		return msg.AckUnroutable()
 	}
