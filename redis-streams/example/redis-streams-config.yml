@@ -13,7 +13,7 @@ components:
     plugin: redis-streams
     constructor: New
     params:
-      addr: localhost:6379
+      address: localhost:6379
       password: ""
       db: 0
   dmx:
