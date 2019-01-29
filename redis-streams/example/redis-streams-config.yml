@@ -1,0 +1,32 @@
+system:
+  max_proc: 4
+  admin:
+    enabled: true
+    bind_addr: localhost:4000
+
+components:
+  tcp_rcv:
+    module: receiver.tcp
+    params:
+      bind_addr: :3110
+  redis_streams:
+    plugin: redis-streams
+    constructor: New
+    params:
+      addr: localhost:6379
+      password: ""
+      db: 0
+  dmx:
+    module: link.demux
+  debugger:
+    module: sink.dumper
+    params:
+      out: STDOUT
+
+pipeline:
+  tcp_rcv:
+    connect: dmx
+  dmx:
+    links:
+      - redis_streams
+      - debugger

@@ -19,29 +19,29 @@ type RedisStreams struct {
 var _ core.Link = &RedisStreams{}
 
 func New(name string, params core.Params, context *core.Context) (core.Link, error) {
-	rsl := &RedisStreams{
+	rs := &RedisStreams{
 		"", "", 0,
 		core.NewConnectorWithContext(context),
 	}
 	//TODO(olegs)
 
-	rsl.OnSetUp(rsl.SetUp)
-	rsl.OnTearDown(rsl.TearDown)
+	rs.OnSetUp(rs.SetUp)
+	rs.OnTearDown(rs.TearDown)
 
-	return rsl, nil
+	return rs, nil
 }
 
-func (rsl *RedisStreams) SetUp() error {
-	ctx := rsl.Connector.GetContext()
+func (rs *RedisStreams) SetUp() error {
+	ctx := rs.Connector.GetContext()
 	var client *redis.Client
 	client_i, ok := ctx.GetVal("redis-client")
 	if ok {
 		client = client_i.(*redis.Client)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:     rsl.addr,
-			Password: rsl.passwd,
-			DB:       rsl.db,
+			Addr:     rs.addr,
+			Password: rs.passwd,
+			DB:       rs.db,
 		})
 		ctx.SetVal("redis-client", client)
 	}
@@ -50,12 +50,12 @@ func (rsl *RedisStreams) SetUp() error {
 	return nil
 }
 
-func (rsl *RedisStreams) TearDown() error {
+func (rs *RedisStreams) TearDown() error {
 	//TODO(olegs)
 	return nil
 }
 
-func (rsl *RedisStreams) DevEnv(context *devenv.Context) ([]devenv.Fragment, error) {
+func (rs *RedisStreams) DevEnv(context *devenv.Context) ([]devenv.Fragment, error) {
 	return []devenv.Fragment{
 		devenv.DockerComposeFragment(`
   redis:
